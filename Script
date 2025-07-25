@@ -1,0 +1,176 @@
+local player = game.Players.LocalPlayer
+local teleportPoints = {}
+
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "TeleportGui"
+
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 150, 0, 220)
+frame.Position = UDim2.new(0.8, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Active = true
+
+local header = Instance.new("Frame", frame)
+header.Size = UDim2.new(1, 0, 0, 25)
+header.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+header.BorderSizePixel = 0
+
+local headerLabel = Instance.new("TextLabel", header)
+headerLabel.Text = "Телепорт"
+headerLabel.Size = UDim2.new(1, 0, 1, 0)
+headerLabel.BackgroundTransparency = 1
+headerLabel.TextColor3 = Color3.new(1,1,1)
+headerLabel.TextScaled = true
+
+local closeBtn = Instance.new("TextButton", header)
+closeBtn.Size = UDim2.new(0, 25, 1, 0)
+closeBtn.Position = UDim2.new(1, -25, 0, 0)
+closeBtn.Text = "X"
+closeBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.TextScaled = true
+closeBtn.AutoButtonColor = false
+
+local minimizeBtn = Instance.new("TextButton", header)
+minimizeBtn.Size = UDim2.new(0, 25, 1, 0)
+minimizeBtn.Position = UDim2.new(1, -50, 0, 0)
+minimizeBtn.Text = "-"
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+minimizeBtn.TextColor3 = Color3.new(1,1,1)
+minimizeBtn.TextScaled = true
+minimizeBtn.AutoButtonColor = false
+
+local list = Instance.new("ScrollingFrame", frame)
+list.Size = UDim2.new(1, -10, 1, -105)
+list.Position = UDim2.new(0, 5, 0, 30)
+list.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+list.CanvasSize = UDim2.new(0, 0, 0, 0)
+list.ScrollBarThickness = 6
+
+local addButton = Instance.new("TextButton", frame)
+addButton.Size = UDim2.new(1, -10, 0, 25)
+addButton.Position = UDim2.new(0, 5, 1, -70)
+addButton.Text = "Добавить"
+addButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+addButton.TextColor3 = Color3.new(1,1,1)
+addButton.AutoButtonColor = false
+addButton.TextScaled = true
+
+local authorLabel = Instance.new("TextLabel", frame)
+authorLabel.Size = UDim2.new(1, -10, 0, 20)
+authorLabel.Position = UDim2.new(0, 5, 1, -40)
+authorLabel.BackgroundTransparency = 1
+authorLabel.Text = "by @NuAKtoEsliNeOn"
+authorLabel.TextColor3 = Color3.new(1,1,1)
+authorLabel.TextScaled = true
+authorLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+local restoreBtn = Instance.new("TextButton", screenGui)
+restoreBtn.Size = UDim2.new(0, 30, 0, 30)
+restoreBtn.Position = UDim2.new(0, 10, 0.3, 0)
+restoreBtn.Text = "⮕"
+restoreBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+restoreBtn.TextColor3 = Color3.new(1,1,1)
+restoreBtn.Visible = false
+restoreBtn.AutoButtonColor = false
+restoreBtn.TextScaled = true
+
+local function updateList()
+    for _, child in pairs(list:GetChildren()) do
+        if child:IsA("Frame") or child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    local yOffset = 0
+    for i, data in ipairs(teleportPoints) do
+        local pos = data.position
+        local name = data.name or ("Точка "..i)
+
+        local itemFrame = Instance.new("Frame", list)
+        itemFrame.Size = UDim2.new(1, -10, 0, 30)
+        itemFrame.Position = UDim2.new(0, 5, 0, yOffset)
+        itemFrame.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+
+        local btnTp = Instance.new("TextButton", itemFrame)
+        btnTp.Size = UDim2.new(0.7, 0, 1, 0)
+        btnTp.Position = UDim2.new(0, 0, 0, 0)
+        btnTp.Text = string.format("%s (%.1f, %.1f, %.1f)", name, pos.X, pos.Y, pos.Z)
+        btnTp.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        btnTp.TextColor3 = Color3.new(1,1,1)
+        btnTp.AutoButtonColor = false
+        btnTp.TextScaled = false
+        btnTp.MouseButton1Click:Connect(function()
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(pos)
+            end
+        end)
+
+        local btnDelete = Instance.new("TextButton", itemFrame)
+        btnDelete.Size = UDim2.new(0.3, -5, 1, 0)
+        btnDelete.Position = UDim2.new(0.7, 5, 0, 0)
+        btnDelete.Text = "🗑"
+        btnDelete.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+        btnDelete.TextColor3 = Color3.new(1,1,1)
+        btnDelete.AutoButtonColor = false
+        btnDelete.TextScaled = true
+        btnDelete.MouseButton1Click:Connect(function()
+            table.remove(teleportPoints, i)
+            updateList()
+        end)
+
+        yOffset = yOffset + 35
+    end
+    list.CanvasSize = UDim2.new(0, 0, 0, yOffset)
+end
+
+addButton.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        table.insert(teleportPoints, {position = char.HumanoidRootPart.Position, name = nil})
+        updateList()
+    end
+end)
+
+updateList()
+
+local dragging = false
+local dragStartPos
+local frameStartPos
+
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStartPos = input.Position
+        frameStartPos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+header.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local delta = input.Position - dragStartPos
+        local newX = math.clamp(frameStartPos.X.Scale + delta.X / workspace.CurrentCamera.ViewportSize.X, 0, 1 - frame.Size.X.Scale)
+        local newY = math.clamp(frameStartPos.Y.Scale + delta.Y / workspace.CurrentCamera.ViewportSize.Y, 0, 1 - frame.Size.Y.Scale)
+        frame.Position = UDim2.new(newX, 0, newY, 0)
+    end
+end)
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    restoreBtn.Visible = true
+end)
+
+restoreBtn.MouseButton1Click:Connect(function()
+    frame.Visible = true
+    restoreBtn.Visible = false
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
